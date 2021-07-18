@@ -3,18 +3,20 @@ package main
 import (
 	"fmt"
 	"net"
-)
+	"os"
 
-const (
-	IP   = "127.0.0.1"
-	Port = "3000"
+	"github.com/augustkang/gochat/client/pkg/app"
 )
 
 func main() {
-	d, err := net.Dial(IP, Port)
+	conn, err := net.Dial("tcp", ":3000")
 	if err != nil {
-		fmt.Println("Failed to connect server")
+		fmt.Println("Failed to connect server : ", err)
+		os.Exit(0)
 	}
-	
+	defer conn.Close()
 
+	a := app.NewApp(conn)
+
+	a.Run(conn)
 }
