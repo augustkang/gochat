@@ -5,7 +5,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/augustkang/gochat/client/pkg/app"
+	"github.com/augustkang/gochat/client/pkg/chatapp"
+	"github.com/augustkang/gochat/client/pkg/chatui"
 )
 
 func main() {
@@ -16,7 +17,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	a := app.NewApp(conn)
+	app := chatapp.NewApp(conn)
+	app.InitialPrompt()
+	ui, rbox := chatui.GetUI(app.UserName, app)
+	go app.Run(conn, ui, rbox)
+	if err := ui.Run(); err != nil {
+		panic(err)
+	}
 
-	a.Run(conn)
 }

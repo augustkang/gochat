@@ -10,7 +10,8 @@ Simple TCP chat application
 4. (client1,2) : join room
 5. (client1,2) : send message
 
+## TODO
+- refactor
+
 ## Limitations
-- Better printing
-- Duplex but not realtime in client terminal(have to type something to receive message from other users)
-- Need more command(features)
+- ~Duplex but not realtime in client terminal(have to type something to receive message from other users)~

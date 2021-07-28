@@ -63,11 +63,33 @@ func (s *Server) HandleConnection(conn net.Conn) {
 		color.Red("Failed to get user input. err : ", err)
 		os.Exit(1)
 	}
-
 	r = strings.TrimSpace(r)
 	u := chat.NewUser(r, conn)
 	s.UserList[u.UserName] = u
 	fmt.Printf("New user %s joined\n", u.UserName)
+	r, err = reader.ReadString('\n')
+	if err != nil {
+		color.Red("Failed to get user input. err : ", err)
+		os.Exit(1)
+	}
+	r = strings.TrimSpace(r)
+	joinCmd := strings.Split(r, " ")
+	exist := s.SearchRoom(joinCmd[1])
+	if exist {
+		fmt.Printf("User %s joined %s\n", u.UserName, joinCmd[1])
+		r := s.RoomList[joinCmd[1]]
+		r.Users = append(r.Users, u)
+		s.RoomList[joinCmd[1]] = r
+		u.JoinRoom(joinCmd[1])
+		msg := "<<User " + u.UserName + " has joined this room! >>\n"
+		s.Broadcast(msg, u)
+	} else {
+		fmt.Printf("Room name %s doesn't exist. Create and join\n", joinCmd[1])
+		r := chat.NewRoom(joinCmd[1])
+		r.Users = append(r.Users, u)
+		u.JoinRoom(joinCmd[1])
+		s.RoomList[joinCmd[1]] = r
+	}
 
 	for {
 		r, err := reader.ReadString('\n')
@@ -76,45 +98,12 @@ func (s *Server) HandleConnection(conn net.Conn) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
 		r = strings.TrimSpace(r)
-		input := strings.Split(r, " ")
 
-		switch input[0] {
-		case "join":
-			exist := s.SearchRoom(input[1])
-			if exist {
-				fmt.Printf("User %s joined %s\n", u.UserName, input[1])
-				r := s.RoomList[input[1]]
-				r.Users = append(r.Users, u)
-				s.RoomList[input[1]] = r
-				u.JoinRoom(input[1])
-			} else {
-				fmt.Printf("Room name %s doesn't exist. Create and join\n", input[1])
-				r := chat.NewRoom(input[1])
-				r.Users = append(r.Users, u)
-				u.JoinRoom(input[1])
-				s.RoomList[input[1]] = r
-			}
-		case "list":
-			if len(s.RoomList) == 0 {
-				fmt.Println("There is no room.")
-			} else {
-				for _, r := range s.RoomList {
-					fmt.Println("Room : ", r.RoomName)
-				}
-			}
-		case "user":
-			for _, u := range s.UserList {
-				fmt.Println("responding user list")
-				fmt.Println("user : ", u.UserName)
-			}
-		case "quit":
-			fmt.Printf("User %s exited gochat\n", input[0])
-		case "send":
-			input[1] = input[1] + "\n"
-			s.Broadcast(input[1], u)
-		}
+		r = u.UserName + " : " + r + "\n"
+		fmt.Print(r)
+		s.Broadcast(r, u)
+
 	}
 }
 
