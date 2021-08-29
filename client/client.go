@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
-	"os"
+	"sync"
 
 	"github.com/augustkang/gochat/client/pkg/chatapp"
 	"github.com/augustkang/gochat/client/pkg/chatui"
@@ -13,16 +13,18 @@ func main() {
 	conn, err := net.Dial("tcp", ":3000")
 	if err != nil {
 		fmt.Println("Failed to connect server : ", err)
-		os.Exit(0)
+		panic(err)
 	}
 	defer conn.Close()
 
 	app := chatapp.NewApp(conn)
 	app.InitialPrompt()
 	ui, rbox := chatui.GetUI(app.UserName, app)
-	go app.Run(conn, ui, rbox)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go app.Run(conn, ui, rbox, wg)
 	if err := ui.Run(); err != nil {
 		panic(err)
 	}
-
+	wg.Wait()
 }

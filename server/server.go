@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 
 	"github.com/augustkang/gochat/server/pkg/chat"
@@ -35,10 +34,12 @@ func (s *Server) SendToUser(m string, u *chat.User) {
 	n, err := w.Write([]byte(m))
 	if err != nil {
 		fmt.Println(n, err)
+		panic(err)
 	}
 	err = w.Flush()
 	if err != nil {
 		fmt.Println(err)
+		panic(err)
 	}
 }
 
@@ -61,7 +62,7 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	r, err := reader.ReadString('\n')
 	if err != nil {
 		color.Red("Failed to get user input. err : ", err)
-		os.Exit(1)
+		panic(err)
 	}
 	r = strings.TrimSpace(r)
 	u := chat.NewUser(r, conn)
@@ -70,25 +71,24 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	r, err = reader.ReadString('\n')
 	if err != nil {
 		color.Red("Failed to get user input. err : ", err)
-		os.Exit(1)
+		panic(err)
 	}
-	r = strings.TrimSpace(r)
-	joinCmd := strings.Split(r, " ")
-	exist := s.SearchRoom(joinCmd[1])
+	roomName := strings.TrimSpace(r)
+	exist := s.SearchRoom(roomName)
 	if exist {
-		fmt.Printf("User %s joined %s\n", u.UserName, joinCmd[1])
-		r := s.RoomList[joinCmd[1]]
+		fmt.Printf("User %s joined %s\n", u.UserName, roomName)
+		r := s.RoomList[roomName]
 		r.Users = append(r.Users, u)
-		s.RoomList[joinCmd[1]] = r
-		u.JoinRoom(joinCmd[1])
+		s.RoomList[roomName] = r
+		u.JoinRoom(roomName)
 		msg := "<<User " + u.UserName + " has joined this room! >>\n"
 		s.Broadcast(msg, u)
 	} else {
-		fmt.Printf("Room name %s doesn't exist. Create and join\n", joinCmd[1])
-		r := chat.NewRoom(joinCmd[1])
+		fmt.Printf("Room name %s doesn't exist. Create and join\n", roomName)
+		r := chat.NewRoom(roomName)
 		r.Users = append(r.Users, u)
-		u.JoinRoom(joinCmd[1])
-		s.RoomList[joinCmd[1]] = r
+		u.JoinRoom(roomName)
+		s.RoomList[roomName] = r
 	}
 
 	for {
@@ -96,7 +96,7 @@ func (s *Server) HandleConnection(conn net.Conn) {
 		if err != nil {
 			color.Red("failed to read string from client")
 			fmt.Println(err)
-			os.Exit(1)
+			panic(err)
 		}
 		r = strings.TrimSpace(r)
 
@@ -120,7 +120,7 @@ func (s *Server) Run() {
 	l, err := net.Listen(Protocol, s.Port)
 	if err != nil {
 		color.Red("Failed to listen port : ", s.Port)
-		os.Exit(0)
+		panic(err)
 	}
 	defer l.Close()
 	color.Cyan("Server started and listening ")
@@ -131,7 +131,7 @@ func (s *Server) Run() {
 		if err != nil {
 			color.Red("Failed to accept client")
 			fmt.Println(err)
-			os.Exit(0)
+			panic(err)
 		}
 		go s.HandleConnection(conn)
 	}

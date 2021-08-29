@@ -2,7 +2,6 @@ package chatui
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/augustkang/gochat/client/pkg/chatapp"
@@ -27,7 +26,11 @@ func GetUI(userName string, app *chatapp.App) (ui tui.UI, cbox *tui.Box) {
 			tui.NewLabel(username+" : "+e.Text()),
 			tui.NewSpacer(),
 		))
-		app.WriteToConn(e.Text() + "\n")
+		err := app.WriteToConn(e.Text() + "\n")
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
 		input.SetText("")
 	})
 
@@ -41,7 +44,7 @@ func GetUI(userName string, app *chatapp.App) (ui tui.UI, cbox *tui.Box) {
 	ui, err := tui.New(chat)
 	if err != nil {
 		fmt.Println("failed to set ui", err)
-		os.Exit(1)
+		panic(err)
 	}
 	ui.SetKeybinding("Esc", func() { ui.Quit() })
 

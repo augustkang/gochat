@@ -11,6 +11,7 @@ Simple TCP chat application
 5. (client1,2) : send message
 
 ## TODO
+- exit gracefully when client exits
 - refactor
 
 ## Limitations
